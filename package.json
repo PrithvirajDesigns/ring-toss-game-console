@@ -1,0 +1,22 @@
+{
+  "name": "ring-toss-tank",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "dev:phone": "vite --host",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host",
+    "typecheck": "tsc --noEmit",
+    "test:sim": "node scripts/run-sim-test.mjs",
+    "build:single": "tsc --noEmit && SINGLE=1 vite build && node scripts/build-single.mjs",
+    "sprites": "node scripts/run-ts.mjs scripts/export-sprites.ts",
+    "icons": "node scripts/run-ts.mjs scripts/make-icons.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.6",
+    "typescript": "^5.6.0",
+    "vite": "^6.0.0"
+  }
+}

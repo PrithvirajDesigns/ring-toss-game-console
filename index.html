@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+    <meta name="theme-color" content="#ffffff" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="manifest" href="./manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 16 16%27%3E%3Ccircle cx=%278%27 cy=%278%27 r=%275%27 fill=%27none%27 stroke=%27%23ff4b4b%27 stroke-width=%273%27/%3E%3C/svg%3E" />
+    <title>Ring Toss Tank</title>
+    <style>
+      /* ---------- Tide Pocket: an original retro handheld shell ---------- */
+      :root { --w: min(calc(100vw - 14px), 430px);
+        /* fine moulded-plastic grain and a coarser, lighter rubber grain (procedural, tileable) */
+        --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .55 -.22'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+        --rubber: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='90' height='90'%3E%3Cfilter id='r'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 .58 -.26'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23r)'/%3E%3C/svg%3E"); }
+      .theme-ocean  { --plastic: 0, 112, 186; --alpha: .86; --rim: #00406e; --hi: #5fb4ec; --btn: #22262e; --btn-hi: #4c535f; --btn-txt: #e2f1ff; --ink: #d3ecff; --dpad: #262a33; --int-op: .95; --well: rgba(0,28,64,.30); --int-col: #001d36; }
+      .theme-clear  { --plastic: 236, 242, 248; --alpha: .38; --rim: #b9c6d4; --hi: #ffffff; --btn: #2a3140; --btn-hi: #5a6578; --btn-txt: #eef3f9; --ink: #5d6c80; --dpad: rgba(34,40,52,.92); --int-op: 1; --well: rgba(120,150,185,.10); }
+      .theme-lagoon { --int-op: .55; --well: rgba(0,0,0,.10); --plastic: 64, 190, 204; --alpha: .80; --rim: #1d7d90; --hi: #b8f1f5; --btn: #1b2a44; --btn-hi: #3b5378; --btn-txt: #d7f6ff; --ink: #0c3a46; --dpad: #1a2233; }
+      .theme-coral  { --plastic: 255, 132, 112; --alpha: .97; --rim: #c4523f; --hi: #ffd2c4; --btn: #3a1f35; --btn-hi: #6a3a5e; --btn-txt: #ffe3dc; --ink: #6b2420; --dpad: #2a1b26; --int-op: 0; --well: rgba(0,0,0,.10); }
+      .theme-smoke  { --plastic: 70, 84, 104; --alpha: .74; --rim: #232b38; --hi: #a9bdd6; --btn: #e9eef5; --btn-hi: #ffffff; --btn-txt: #2a3442; --ink: #cfe0f2; --dpad: #11161f; --int-op: .5; --well: rgba(0,0,0,.14); }
+
+      html, body { margin: 0; height: 100%; overflow: hidden; background: #ffffff;
+        -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; touch-action: none;
+        font-family: ui-rounded, "SF Pro Rounded", "Nunito", system-ui, sans-serif; }
+      #stage { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center;
+        padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); box-sizing: border-box; }
+
+      .shell { position: relative; width: var(--w); box-sizing: border-box; padding: 38px 11px 16px; border-radius: 30px 30px 34px 34px;
+        background: var(--grain), linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.10)), rgba(var(--plastic), var(--alpha));
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,.10), inset 0 -4px 0 rgba(0,0,0,.14), inset -3px 0 0 rgba(0,0,0,.08),
+          0 2px 0 var(--rim), 0 14px 30px rgba(20,40,70,.22), 0 3px 8px rgba(20,40,70,.12);
+        display: flex; flex-direction: column; align-items: stretch; gap: 12px; }
+      /* see-through internals: a tidy board, contact pads, screws and the speaker magnet */
+      .internals { position: absolute; inset: 0; border-radius: inherit; overflow: hidden; pointer-events: none; opacity: var(--int-op); z-index: 0; color: var(--int-col, #0a2a44); }
+      .internals svg { display: block; }
+      .shell > :not(.internals) { position: relative; z-index: 1; }
+      .shell > .topline { position: absolute; }
+      /* crystal-clear acrylic: thick bright edges, a cool inner glow where light bends, gloss streaks */
+      .theme-clear .shell {
+        box-shadow: inset 0 0 0 1.5px rgba(185,200,218,.8), inset 0 0 22px rgba(150,178,210,.30), inset 0 -5px 10px rgba(140,165,195,.22), 0 1px 0 #c5d1de, 0 16px 34px rgba(40,60,90,.18), 0 3px 8px rgba(40,60,90,.10); }
+      /* translucent ocean blue: deep tinted plastic, thicker (darker) towards the edges, no gloss */
+      .theme-ocean .shell { box-shadow:
+          inset 0 0 0 1px rgba(0,30,60,.55),            /* outer edge */
+          inset 0 1px 0 1px rgba(140,200,240,.22),      /* top bevel catching ambient light */
+          inset 0 0 0 5px rgba(0,60,110,.18),           /* rounded edge band */
+          inset 0 0 28px rgba(0,22,56,.55),             /* thicker plastic toward the rim */
+          inset 0 -10px 16px rgba(0,18,46,.45),         /* underside falls into shade */
+          0 1px 0 #00355c, 0 2px 2px rgba(0,30,70,.30), 0 10px 18px rgba(0,30,70,.22), 0 30px 60px rgba(0,30,70,.18); }
+      /* mould parting line just inside the rim */
+      .shell::after { content: ""; position: absolute; inset: 5px; border-radius: 25px 25px 29px 29px; pointer-events: none; z-index: 0;
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,.14), 0 0 0 1px rgba(255,255,255,.05); }
+      .theme-ocean .bezel { box-shadow: inset 0 1px 0 rgba(255,255,255,.07), inset 0 -2px 4px rgba(0,0,0,.5), 0 0 0 1px rgba(0,22,46,.7), 0 1px 0 1px rgba(110,180,230,.14), 0 2px 4px rgba(0,20,50,.35); }
+            .theme-clear { --int-col: #4f6a86; }
+                  .theme-clear .bezel { background: linear-gradient(#262d3a, #171c26); box-shadow: inset 0 2px 6px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.7), 0 1px 0 rgba(255,255,255,.9); }
+
+      .topline { position: absolute; top: 11px; left: 26px; right: 26px; display: flex; justify-content: flex-start; align-items: center; z-index: 3; }
+      .power-switch { display: flex; align-items: center; gap: 6px; font: 800 8px/1 system-ui; letter-spacing: .14em; color: var(--ink); opacity: .8;
+        background: none; border: 0; padding: 4px 4px; margin: 0; cursor: pointer; touch-action: manipulation; }
+      .power-switch i { width: 26px; height: 9px; border-radius: 5px; position: relative;
+        background: linear-gradient(rgba(0,0,0,.45), rgba(0,0,0,.25)); box-shadow: inset 0 1px 2px rgba(0,0,0,.5), 0 1px 0 rgba(255,255,255,.12); }
+      .power-switch i::after { content: ""; position: absolute; top: 1px; left: 1px; width: 11px; height: 7px; border-radius: 4px; transition: left .18s ease-out;
+        background: var(--rubber), linear-gradient(#5a616d, #2c3038); box-shadow: 0 1px 1px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.18); }
+      .on .power-switch i::after { left: 14px; }
+      .power-switch .on-label { opacity: .45; } .on .power-switch .on-label { opacity: 1; }
+      .power-switch .off-label { opacity: 1; } .on .power-switch .off-label { opacity: .45; }
+
+      .bezel { position: relative; background: var(--grain), linear-gradient(#232b3a, #161b26); border-radius: 14px; padding: 6px 8px 8px;
+        box-shadow: inset 0 2px 6px rgba(0,0,0,.6), 0 1px 0 rgba(255,255,255,.25); display: flex; flex-direction: column; align-items: center; }
+      .bezel-top { display: flex; align-items: center; gap: 6px; width: 100%; padding: 0 4px 6px; box-sizing: border-box; }
+      .bezel-top .rule { flex: 1; height: 1px; background: linear-gradient(90deg, rgba(127,211,230,.35), rgba(127,211,230,0)); }
+      .led { width: 8px; height: 8px; border-radius: 50%; background: #3b1414; box-shadow: inset 0 1px 1px rgba(0,0,0,.6); transition: background .2s, box-shadow .2s; }
+      .on .led { background: #ff4d5a; box-shadow: 0 0 6px 2px rgba(255,77,90,.7), inset 0 -1px 1px rgba(0,0,0,.3); }
+      .led-label { font: 700 6px/1 system-ui; color: #7f8aa0; letter-spacing: .14em; }
+      .well { position: relative; background: #000; border-radius: 3px; line-height: 0;
+        box-shadow: 0 0 0 1px #05070b, 0 0 0 3px #0e131c, 0 0 0 4px rgba(255,255,255,.05), 0 -1px 6px 3px rgba(0,0,0,.55); }
+      .well::after { content: ""; position: absolute; inset: 0; pointer-events: none; box-shadow: inset 0 2px 5px rgba(0,0,0,.65), inset 0 0 1px rgba(0,0,0,.9); }
+      #screen { display: block; image-rendering: pixelated; image-rendering: crisp-edges;
+        /* a colour-LCD character: a touch richer, warmer and punchier than the raw image */
+        filter: saturate(1.12) contrast(1.06) brightness(1.03) sepia(.06); }
+      /* display panel: a faint grid between the game's pixels (aligned to them), a soft backlight falloff toward the edges */
+      .lcd { position: absolute; inset: 0; pointer-events: none; border-radius: 3px;
+        background:
+          radial-gradient(120% 110% at 50% 45%, rgba(255,250,235,.035) 0%, rgba(0,0,0,0) 55%, rgba(0,0,0,.22) 100%),
+          linear-gradient(90deg, rgba(0,0,0,.20) 0 var(--line, 1px), transparent var(--line, 1px)) 0 0 / var(--px, 3px) var(--px, 3px),
+          linear-gradient(0deg, rgba(0,0,0,.20) 0 var(--line, 1px), transparent var(--line, 1px)) 0 0 / var(--px, 3px) var(--px, 3px); }
+      #screen-off { position: absolute; inset: 0; background: radial-gradient(ellipse at 40% 35%, #26332e, #121a17); display: flex; align-items: center; justify-content: center;
+        transition: opacity .45s ease; color: #5f7a6c; font: 700 12px/1.4 ui-monospace, monospace; letter-spacing: .15em; text-align: center; }
+      #screen-off span { animation: blink 1.2s steps(2, start) infinite; }
+      .on #screen-off { opacity: 0; pointer-events: none; }
+      @keyframes blink { to { visibility: hidden; } }
+      .brand { margin-top: 7px; font: italic 800 15px/1 ui-rounded, system-ui, sans-serif; letter-spacing: .06em; color: #c8d6ea; cursor: pointer; }
+      .brand b { color: #7fd3e6; font-weight: 800; }
+      .brand small { font: 700 7px/1 system-ui; letter-spacing: .2em; color: #6f7c93; margin-left: 6px; font-style: normal; vertical-align: middle; }
+
+      .controls { display: grid; grid-template-columns: 1fr 1fr; align-items: center; padding: 6px 6px 0; }
+      .dpad { position: relative; width: 116px; height: 116px; touch-action: none; justify-self: start; margin-left: 4px; }
+      .dpad::before { content: ""; position: absolute; inset: -8px; border-radius: 50%; background: var(--well);
+        box-shadow: inset 0 3px 6px rgba(0,0,0,.35), inset 0 -1px 0 rgba(255,255,255,.10), 0 1px 0 rgba(255,255,255,.08); }
+      .dpad .arm { position: absolute; background: var(--grain), var(--dpad);
+        box-shadow: inset 0 1px 0 rgba(255,255,255,.12), inset 0 -3px 4px rgba(0,0,0,.45), inset 0 0 0 1px rgba(0,0,0,.35), 0 3px 0 rgba(0,0,0,.5), 0 5px 7px rgba(0,0,0,.35); }
+      .dpad .h { background: var(--grain), linear-gradient(180deg, #3a3f49, var(--dpad) 45%, #1b1e24); }
+      .dpad .v { background: var(--grain), linear-gradient(90deg, #30343d, var(--dpad) 50%, #1d2027); }
+      .dpad .h { left: 0; right: 0; top: 38px; height: 40px; border-radius: 6px; }
+      .dpad .v { top: 0; bottom: 0; left: 38px; width: 40px; border-radius: 6px; }
+      .dpad .hub { position: absolute; left: 44px; top: 44px; width: 28px; height: 28px; border-radius: 50%; background: radial-gradient(circle at 50% 58%, rgba(0,0,0,.45), rgba(0,0,0,.15) 60%, rgba(255,255,255,.05) 72%, rgba(0,0,0,0) 74%); }
+      .dpad .tri { position: absolute; width: 0; height: 0; border: 6px solid transparent; opacity: .35; }
+      .dpad .tu { left: 52px; top: 8px; border-bottom-color: #fff; } .dpad .td { left: 52px; bottom: 8px; border-top-color: #fff; }
+      .dpad .tl { top: 52px; left: 8px; border-right-color: #fff; } .dpad .tr { top: 52px; right: 8px; border-left-color: #fff; }
+      .dpad[data-dir=up] { transform: perspective(300px) rotateX(9deg); } .dpad[data-dir=down] { transform: perspective(300px) rotateX(-9deg); }
+      .dpad[data-dir=left] { transform: perspective(300px) rotateY(-9deg); } .dpad[data-dir=right] { transform: perspective(300px) rotateY(9deg); }
+
+      .ab { position: relative; height: 116px; justify-self: end; width: 150px; transform: rotate(-24deg); }
+      .ab::before { content: ""; position: absolute; left: 4px; right: 4px; top: 22px; height: 70px; border-radius: 40px; background: var(--well);
+        box-shadow: inset 0 3px 6px rgba(0,0,0,.35), inset 0 -1px 0 rgba(255,255,255,.10), 0 1px 0 rgba(255,255,255,.08); }
+      .btn-round { position: absolute; top: 28px; width: 60px; height: 60px; border-radius: 50%; border: 0; padding: 0; touch-action: none; transition: transform .05s;
+        /* rubber: fine grain over a dished (concave) top, darker at the centre, a soft raised rim */
+        background: var(--rubber),
+          radial-gradient(circle at 50% 56%, #1f2227 0, #262a30 48%, #343941 74%, #2a2e35 86%, #1c1f24 100%);
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,.55), inset 0 -2px 3px rgba(0,0,0,.4), inset 0 2px 2px rgba(255,255,255,.06),
+          0 3px 0 #121418, 0 4px 0 rgba(0,0,0,.35), 0 7px 10px rgba(0,0,0,.35); }
+      .btn-round.down { transform: translateY(3px);
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,.6), inset 0 3px 5px rgba(0,0,0,.5), 0 0 0 #121418, 0 1px 0 rgba(0,0,0,.35), 0 2px 3px rgba(0,0,0,.3); }
+      #btn-b { left: 10px; } #btn-a { right: 10px; }
+      .ab label { position: absolute; top: 96px; font: 800 12px/1 system-ui; color: var(--ink); opacity: .85; }
+      .ab .lb { left: 34px; } .ab .la { right: 34px; }
+
+      .meta { display: grid; grid-template-columns: 1fr auto auto 1fr; align-items: center; gap: 20px; margin-top: 2px; padding: 0 6px; }
+      .meta .mini { justify-self: start; } .meta .speaker { justify-self: end; }
+      .pill-wrap { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+      .pill { width: 48px; height: 13px; border-radius: 7px; border: 0; padding: 0; touch-action: none;
+        background: var(--rubber), linear-gradient(#3a3f48, #23262c 60%, #1b1d22);
+        box-shadow: inset 0 0 0 1px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08), 0 2px 0 #121418, 0 4px 5px rgba(0,0,0,.3); }
+      .pill.down { transform: translateY(2px); box-shadow: inset 0 0 0 1px rgba(0,0,0,.6), inset 0 2px 3px rgba(0,0,0,.45); }
+      /* the pill sits in its own moulded recess */
+      .pill-wrap::before { content: ""; position: absolute; top: -4px; width: 58px; height: 21px; border-radius: 11px; background: var(--well);
+        box-shadow: inset 0 2px 4px rgba(0,0,0,.35), 0 1px 0 rgba(255,255,255,.08); z-index: -1; }
+      .pill-wrap { position: relative; }
+      .pill-wrap label { font: 800 8px/1 system-ui; letter-spacing: .14em; color: var(--ink); opacity: .85; }
+
+      .mini { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+      .mini button { width: 22px; height: 22px; border-radius: 50%; border: 0; color: var(--btn-txt); font: 700 11px/1 system-ui; touch-action: none;
+        background: var(--rubber), radial-gradient(circle at 50% 56%, #22252b, #353a42 78%, #1d2025); box-shadow: inset 0 0 0 1px rgba(0,0,0,.55), 0 2px 0 #121418, 0 3px 4px rgba(0,0,0,.3); }
+      .mini button.down { transform: translateY(2px); box-shadow: none; }
+      .mini label { font: 800 7px/1 system-ui; letter-spacing: .12em; color: var(--ink); opacity: .8; }
+      .speaker { width: 60px; height: 40px; transform: rotate(-24deg); margin-right: 2px;
+        background: radial-gradient(circle, rgba(0,0,0,.6) 0 1.6px, rgba(0,0,0,.35) 2.2px, rgba(255,255,255,.10) 2.6px, transparent 3px) 0 0 / 10px 10px; border-radius: 10px; opacity: .9; }
+
+      /* dev tuning panel (long-press the brand) */
+      #tune { position: fixed; top: 0; right: 0; max-height: 100%; overflow: auto; width: min(320px, 92vw); background: #0b1a33ee; color: #cfe8ff;
+        border-left: 1px solid #36598a; padding: 8px 10px 40px; box-sizing: border-box; display: none; touch-action: pan-y; z-index: 9;
+        font: 11px/1.3 ui-monospace, monospace; -webkit-user-select: text; user-select: text; }
+      #tune.open { display: block; }
+      #tune h3 { margin: 10px 0 4px; font-size: 12px; color: #ffd36b; }
+      #tune label { display: grid; grid-template-columns: 1fr 52px; gap: 0 6px; margin: 4px 0; }
+      #tune input[type=range] { grid-column: 1 / 3; width: 100%; }
+      #tune .val { text-align: right; color: #9fd0ff; }
+      #tune .row { display: flex; gap: 6px; margin: 6px 0; flex-wrap: wrap; }
+      #tune .row button { background: #1a3355; color: #cfe8ff; border: 1px solid #36598a; border-radius: 6px; padding: 4px 8px; font: 11px ui-monospace, monospace; }
+      #tune textarea { width: 100%; height: 80px; font-size: 10px; background: #061226; color: #9fd0ff; border: 1px solid #36598a; }
+      #toast { position: fixed; left: 50%; bottom: calc(14px + env(safe-area-inset-bottom)); transform: translateX(-50%); color: #4a5a70; font: 11px/1.3 system-ui; text-align: center; max-width: 90vw; pointer-events: none; transition: opacity .4s; }
+      /* narrow phones (360-380 px): give the screen every pixel of width */
+      @media (max-width: 380px) { :root { --w: calc(100vw - 4px); } .shell { padding-left: 7px; padding-right: 7px; border-radius: 24px 24px 28px 28px; } .bezel { padding-left: 5px; padding-right: 5px; } }
+      /* short phones: shrink the controls, never the screen */
+      @media (max-height: 760px) { .shell { gap: 8px; padding-top: 32px; } .controls { transform: scale(.86); margin: -10px 0 -12px; } .meta { margin-top: -4px; } }
+      @media (max-height: 680px) { .controls { transform: scale(.74); margin: -18px 0 -20px; } .brand { margin-top: 4px; font-size: 13px; } }
+    </style>
+  </head>
+  <body>
+    <div id="stage">
+      <div class="theme-ocean" id="device">
+        <div class="shell">
+          <div class="internals" id="internals"></div>
+          <div class="topline">
+            <button class="power-switch" id="btn-power" aria-label="Power switch" aria-pressed="false"><span class="off-label">OFF</span><i></i><span class="on-label">ON</span></button>
+          </div>
+
+          <div class="bezel">
+            <div class="bezel-top"><div class="led"></div><div class="led-label">POWER</div><div class="rule"></div></div>
+            <div class="well">
+              <canvas id="screen" width="320" height="288"></canvas>
+              <div class="lcd" id="lcd"></div>
+              <div id="screen-off"><span id="screen-off-msg">TAP TO<br />POWER ON</span></div>
+            </div>
+            <div class="brand" id="brand">TIDE <b>POCKET</b><small>8-BIT REEF</small></div>
+          </div>
+
+          <div class="controls">
+            <div class="dpad" id="dpad" aria-label="D-pad">
+              <div class="arm h"></div><div class="arm v"></div><div class="hub"></div>
+              <i class="tri tu"></i><i class="tri td"></i><i class="tri tl"></i><i class="tri tr"></i>
+            </div>
+            <div class="ab">
+              <button class="btn-round" id="btn-b" aria-label="B"></button>
+              <button class="btn-round" id="btn-a" aria-label="A"></button>
+              <label class="lb">B</label><label class="la">A</label>
+            </div>
+          </div>
+
+          <div class="meta">
+            <div class="mini"><button id="btn-recenter" aria-label="Recenter tilt">&#8634;</button><label>LEVEL</label></div>
+            <div class="pill-wrap"><button class="pill" id="btn-select" aria-label="Select"></button><label>SELECT</label></div>
+            <div class="pill-wrap"><button class="pill" id="btn-start" aria-label="Start"></button><label>START</label></div>
+            <div class="speaker" aria-hidden="true"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="toast"></div>
+    <div id="tune"></div>
+    <script type="module" src="/src/shell/shell.ts"></script>
+  </body>
+</html>
